@@ -1,0 +1,40 @@
+<?php
+function sendnotification($token,$text){
+		$deviceToken = $token;
+		//AUTH PASSWORD
+		$passphrase = 'Avotar123';
+		$message = $text;
+		$ctx = stream_context_create();
+		//CERTIFICATE PATH
+		stream_context_set_option($ctx, 'ssl', 'local_cert', 'certificate/ck.pem');
+		stream_context_set_option($ctx, 'ssl', 'passphrase', $passphrase);
+		//PUSH URL
+		$fp = stream_socket_client('ssl://gateway.sandbox.push.apple.com:2195',$err,$errstr, 60, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx);
+		if (!$fp)
+		exit("Failed to connect: $err $errstr" . PHP_EOL);
+
+		//ADDITIONAL PARAMETERS
+
+		$body['aps'] = array(
+		'alert' => $message,
+		'sound' => 'default',
+		'badge' => +1,
+		);
+
+		// Encode the payload as JSON
+		$payload = json_encode($body);
+		// Build the binary notification
+		$msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
+		// Send it to the server
+		$result = fwrite($fp, $msg, strlen($msg));
+			if (!$result){
+				$a= '0';
+			} else {
+				$a='1';
+			}
+		return $a;
+		fclose($fp);
+}
+// DEVICE TOKEN AND NOTIFICATION TEXT
+echo sendnotification("1efb6aa882c24f780e5e5b43dc8e8e360a3cd42b01be6a3b4b8078e0fe9b5b06",'hello');
+?>
